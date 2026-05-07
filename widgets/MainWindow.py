@@ -32,7 +32,6 @@ from app.configs import AppConfig, ConfigManager
 from app.mode import LOADMode, SAMMode, VIEWERMode, VIEWMode
 from path import CACHE_PATH, ICONS_PATH
 from scripts.logger import log_debug, log_error, log_info, log_warning
-from scripts.theme import ThemeManager
 from ui.MainWindow_ui import Ui_MainWindow
 from widgets.FileDocker import FileDocker
 from widgets.ImageDocker import ImageDocker
@@ -41,6 +40,7 @@ from widgets.InfoDocker import InfoDocker
 from widgets.LoadDialog import LoadDialog
 from widgets.SegmentDocker import SegmentDocker
 from widgets.ShortcutDialog import ShortcutDialog
+from widgets.theme import ThemeManager
 from widgets.WorkerThread import (
     BuiltThread,
     DicomWorker,

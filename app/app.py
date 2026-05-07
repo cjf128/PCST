@@ -1,5 +1,5 @@
 from app.configs import AppConfig, ConfigManager
-from scripts.theme import ThemeManager
+from widgets.theme import ThemeManager
 from widgets.MainWindow import MainWindow
 
 
