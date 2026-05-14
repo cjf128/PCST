@@ -240,9 +240,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if info_layout:
             info_layout.addWidget(self.info_setting)
 
-        self.view_3d = QVTKRenderWindowInteractor()
+        self.view_3d = None
         self.view_layout = QVBoxLayout()
-        self.view_layout.addWidget(self.view_3d)
         self.view_layout.setContentsMargins(0, 0, 0, 0)
         self.view_frame.setLayout(self.view_layout)
 
@@ -1193,6 +1192,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def view_3d_built(self):
         self.stackedWidget.setCurrentIndex(1)
+
+        # 延迟创建 VTK 组件，避免 Linux 下启动时出现额外原生窗口
+        if self.view_3d is None:
+            self.view_3d = QVTKRenderWindowInteractor(self.view_frame)
+            self.view_layout.addWidget(self.view_3d)
 
         if not hasattr(self, "renderer"):
             self.renderer = vtk.vtkRenderer()
