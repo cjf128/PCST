@@ -6,7 +6,7 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
-from PySide6.QtCore import QPoint, QRect, Qt, Signal
+from PySide6.QtCore import QPoint, QPointF, QRect, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPen, QTransform
 from PySide6.QtWidgets import (
     QApplication,
@@ -55,6 +55,7 @@ class ImageViewer(QGraphicsView):
         self.radius = 0
         self.ellipse_pos = [0, 0]
         self.position = [0, 0, 0]
+        self.crosshair_point = None
         self.config()
 
     def config(self):
@@ -128,9 +129,7 @@ class ImageViewer(QGraphicsView):
                 ]
 
                 if self.mode == VIEWERMode.AIM:
-                    self.position[0] = pos.x()
-                    self.position[1] = pos.y()
-                    self.viewport().update()
+                    self._commit_crosshair_point()
 
                 if self.mode == VIEWERMode.SAM:
                     # 获取当前SAM模式
@@ -208,9 +207,7 @@ class ImageViewer(QGraphicsView):
             if self.mode == VIEWERMode.AIM and (
                 event.buttons() & Qt.MouseButton.LeftButton
             ):
-                self.position[0] = pos.x()
-                self.position[1] = pos.y()
-                self.viewport().update()
+                self._commit_crosshair_point()
 
             if self.mode == VIEWERMode.MOVE and (
                 event.buttons() & Qt.MouseButton.LeftButton
@@ -334,14 +331,46 @@ class ImageViewer(QGraphicsView):
     def patient_name_change(self, file_name):
         self.patient_name = file_name
 
+    def set_crosshair_point(self, image_x, image_y):
+        self.crosshair_point = QPointF(float(image_x), float(image_y))
+        viewport_point = self._crosshair_viewport_point()
+        if viewport_point is not None:
+            self.position[0] = viewport_point.x()
+            self.position[1] = viewport_point.y()
+        self.viewport().update()
+
+    def clear_crosshair_point(self):
+        self.crosshair_point = None
+        self.viewport().update()
+
+    def _crosshair_viewport_point(self):
+        if self.crosshair_point is None or self.pixmap_item is None:
+            return None
+
+        scene_point = self.pixmap_item.mapToScene(self.crosshair_point)
+        return self.mapFromScene(scene_point)
+
+    def _commit_crosshair_point(self):
+        if hasattr(self.main_window, "update_crosshair_from_slice_point"):
+            self.main_window.update_crosshair_from_slice_point(self.point)
+        else:
+            self.position[0] = self.last_mouse_position.x()
+            self.position[1] = self.last_mouse_position.y()
+            self.viewport().update()
+
     def drawForeground(self, painter, rect):
         super().drawForeground(painter, rect)
 
         painter.save()
         painter.resetTransform()
 
-        center_x = self.position[0]
-        center_y = self.position[1]
+        viewport_point = self._crosshair_viewport_point()
+        if viewport_point is not None:
+            center_x = viewport_point.x()
+            center_y = viewport_point.y()
+        else:
+            center_x = self.position[0]
+            center_y = self.position[1]
 
         if self.view_mode == VIEWMode.AXIAL:
             axe = ["R", "L", "A", "P"]

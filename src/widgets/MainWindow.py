@@ -110,6 +110,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.color_label: int = 1
         self.layer: int = 0
         self.num: int = -1
+        self.crosshair_voxel_xyz: list[int] | None = None
 
         # 坐标参数
         self.y_star: int = 0
@@ -371,6 +372,95 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if self.view_mode == VIEWMode.CORONAL:
                 return [0, 2, 1]
 
+    def _has_volume(self):
+        return hasattr(self, "ct") and self.ct.size > 0
+
+    def _clamp_index(self, value, size):
+        if size <= 0:
+            return 0
+        return max(0, min(int(round(value)), size - 1))
+
+    def _volume_shape_xyz(self):
+        if not self._has_volume():
+            return (0, 0, 0)
+
+        rows, cols, layers = self.ct.shape
+        if self.view_mode == VIEWMode.AXIAL:
+            return (cols, rows, layers)
+        if self.view_mode == VIEWMode.CORONAL:
+            return (cols, layers, rows)
+        if self.view_mode == VIEWMode.SAGITTAL:
+            return (layers, cols, rows)
+        return (cols, rows, layers)
+
+    def _clamp_voxel_xyz(self, voxel_xyz):
+        size_x, size_y, size_z = self._volume_shape_xyz()
+        x, y, z = voxel_xyz
+        return [
+            self._clamp_index(x, size_x),
+            self._clamp_index(y, size_y),
+            self._clamp_index(z, size_z),
+        ]
+
+    def slice_point_to_voxel_xyz(self, image_x, image_y, layer):
+        if self.view_mode == VIEWMode.AXIAL:
+            voxel_xyz = [image_x, image_y, layer]
+        elif self.view_mode == VIEWMode.CORONAL:
+            voxel_xyz = [image_x, layer, image_y]
+        elif self.view_mode == VIEWMode.SAGITTAL:
+            voxel_xyz = [layer, image_x, image_y]
+        else:
+            voxel_xyz = [image_x, image_y, layer]
+        return self._clamp_voxel_xyz(voxel_xyz)
+
+    def voxel_xyz_to_slice_point(self, voxel_xyz):
+        x, y, z = self._clamp_voxel_xyz(voxel_xyz)
+        if self.view_mode == VIEWMode.AXIAL:
+            return x, y, z
+        if self.view_mode == VIEWMode.CORONAL:
+            return x, z, y
+        if self.view_mode == VIEWMode.SAGITTAL:
+            return y, z, x
+        return x, y, z
+
+    def _set_layer_controls(self, layer):
+        if not self._has_volume():
+            return
+
+        layer = self._clamp_index(layer, self.ct.shape[2])
+        self.layer = layer
+
+        old_sld_state = self.sldLayer.blockSignals(True)
+        old_box_state = self.boxLayer.blockSignals(True)
+        try:
+            self.sldLayer.setValue(layer)
+            self.boxLayer.setValue(layer)
+        finally:
+            self.sldLayer.blockSignals(old_sld_state)
+            self.boxLayer.blockSignals(old_box_state)
+
+    def update_crosshair_from_slice_point(self, point):
+        if self.load_mode == LOADMode.UNLOAD or not self._has_volume():
+            return
+
+        self.crosshair_voxel_xyz = self.slice_point_to_voxel_xyz(
+            point.x(),
+            point.y(),
+            self.layer,
+        )
+        self.sync_crosshair_overlay()
+
+    def sync_crosshair_overlay(self):
+        if not hasattr(self, "viewer"):
+            return
+
+        if self.crosshair_voxel_xyz is None or not self._has_volume():
+            self.viewer.clear_crosshair_point()
+            return
+
+        image_x, image_y, _ = self.voxel_xyz_to_slice_point(self.crosshair_voxel_xyz)
+        self.viewer.set_crosshair_point(image_x, image_y)
+
     def on_model_loaded(self, predictor):
         self.SamPredictor = predictor
         log_info("SAM模型已加载到主窗口")
@@ -440,6 +530,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.viewer.fitInView(
                 self.viewer.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio
             )
+            self.sync_crosshair_overlay()
 
     def refresh_slot(self):
         """刷新视图"""
@@ -706,6 +797,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.ct = np.transpose(ct_data, axes=trans)
         self.pet = np.transpose(pet_data, axes=trans)
         self.seg = np.zeros_like(self.pet, dtype=np.uint8)
+        self.crosshair_voxel_xyz = None
 
         self.undo_stack.clear()
         self.setting()
@@ -746,8 +838,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """导入数据后初始化层数"""
         self.seg_file = Path("")
         self.viewer.information_show = True
-        self.viewer.position[0] = self.viewer.width() // 2
-        self.viewer.position[1] = self.viewer.height() // 2
+        if self.crosshair_voxel_xyz is None:
+            self.viewer.position[0] = self.viewer.width() // 2
+            self.viewer.position[1] = self.viewer.height() // 2
 
         self.stackedWidget.setCurrentIndex(0)
 
@@ -767,8 +860,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.sldLayer.setMaximum(self.ct.shape[2] - 1)
         self.boxLayer.setMaximum(self.ct.shape[2] - 1)
-        self.layer = self.ct.shape[2] // 2
-        self.boxLayer.setValue(self.layer)
+        if self.crosshair_voxel_xyz is None:
+            layer = self.ct.shape[2] // 2
+        else:
+            _, _, layer = self.voxel_xyz_to_slice_point(self.crosshair_voxel_xyz)
+        self._set_layer_controls(layer)
 
         self.update_image()
 
@@ -932,6 +1028,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             self.viewer._scene.setSceneRect(self.viewer.pixmap_item.sceneBoundingRect())
             self.load_mode = LOADMode.LOADED
+
+        if self.load_mode != LOADMode.UNLOAD:
+            self.sync_crosshair_overlay()
 
     def update_property_and_refresh(self, attr_name, value):
         old_value = getattr(self, attr_name, None)
@@ -1127,10 +1226,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             old_layer = self.layer
             if angle.y() > 0 and self.layer < self.ct.shape[2] - 1:
                 self.layer += 1
-                self.sldLayer.setValue(self.layer)
+                self._set_layer_controls(self.layer)
             elif angle.y() < 0 < self.layer:
                 self.layer -= 1
-                self.sldLayer.setValue(self.layer)
+                self._set_layer_controls(self.layer)
 
             # 切换层时，清理之前层的编辑缓存
             if old_layer != self.layer:
