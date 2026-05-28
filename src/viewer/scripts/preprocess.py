@@ -3,8 +3,8 @@ from pathlib import Path
 
 import SimpleITK as sitk
 
-from scripts.basic import read_dicom_series, resize_image
-from scripts.pettosuv import pet_to_suv
+from viewer.scripts.basic import read_dicom_series, resize_image
+from viewer.scripts.pettosuv import pet_to_suv
 
 
 def process_dicom_data(ct_folder: str, pet_folder: str):

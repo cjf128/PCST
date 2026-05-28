@@ -4,7 +4,7 @@ import sys
 import time
 from pathlib import Path
 
-from path import LOGS_PATH
+from viewer.path import LOGS_PATH
 
 _logger = None
 

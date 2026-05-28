@@ -4,9 +4,9 @@ import sys
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from app.app import App
-from path import ICONS_PATH
-from scripts.logger import log_info, setup_logger
+from viewer.app.app import App
+from viewer.path import ICONS_PATH
+from viewer.scripts.logger import log_info, setup_logger
 
 
 def main() -> int:

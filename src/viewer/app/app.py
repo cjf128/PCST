@@ -1,6 +1,6 @@
-from app.configs import AppConfig, ConfigManager
-from widgets.theme import ThemeManager
-from widgets.MainWindow import MainWindow
+from viewer.app.configs import AppConfig, ConfigManager
+from viewer.widgets.theme import ThemeManager
+from viewer.widgets.MainWindow import MainWindow
 
 
 class App:

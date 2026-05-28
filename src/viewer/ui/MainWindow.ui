@@ -486,9 +486,17 @@
     <addaction name="separator"/>
     <addaction name="shortcut_action"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>帮助</string>
+    </property>
+    <addaction name="actionversion"/>
+    <addaction name="actiongithub"/>
+   </widget>
    <addaction name="muFile"/>
    <addaction name="menu"/>
    <addaction name="muView"/>
+   <addaction name="menu_2"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="minimumSize">
@@ -1107,6 +1115,16 @@
    </property>
    <property name="iconText">
     <string>快捷键</string>
+   </property>
+  </action>
+  <action name="actiongithub">
+   <property name="text">
+    <string>github</string>
+   </property>
+  </action>
+  <action name="actionversion">
+   <property name="text">
+    <string>软件信息</string>
    </property>
   </action>
   <zorder>dockWidget_4</zorder>

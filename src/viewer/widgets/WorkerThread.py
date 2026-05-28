@@ -9,10 +9,10 @@ import vtk
 from PySide6.QtCore import QThread, Signal
 from vtkmodules.util import numpy_support
 
-from path import MODELS_PATH
-from scripts.logger import log_debug, log_error, log_info
-from scripts.preprocess import process_dicom_data, process_nifti_data
-from scripts.sort_dicom import sort_dicom_series
+from viewer.path import MODELS_PATH
+from viewer.scripts.logger import log_debug, log_error, log_info
+from viewer.scripts.preprocess import process_dicom_data, process_nifti_data
+from viewer.scripts.sort_dicom import sort_dicom_series
 
 
 class DicomWorker(QThread):
@@ -168,7 +168,7 @@ class ModelLoader(QThread):
     def run(self):
         log_info("开始加载SAM2模型")
         try:
-            from models.sam2 import SAM2Image
+            from viewer.models.sam2 import SAM2Image
 
             encoder_path = MODELS_PATH / self._ENCODER_MODEL
             decoder_path = MODELS_PATH / self._DECODER_MODEL

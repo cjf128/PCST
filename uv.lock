@@ -276,12 +276,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nuitka"
-version = "4.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/e5/d6/477dc84457fc07885f5fd020da4920e8a2787b2c04563ad444ac98f7d3eb/nuitka-4.0.tar.gz", hash = "sha256:0f404f292c3c2cc808d186d05a6d06a4b0aeca93f299cdfd5e33ddbcd19ab560" }
-
-[[package]]
 name = "numpy"
 version = "2.4.3"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -668,9 +662,8 @@ wheels = [
 [[package]]
 name = "viewer"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
-    { name = "nuitka" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "opencv-python" },
@@ -684,7 +677,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "nuitka", specifier = "==4.0" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "onnxruntime", specifier = ">=1.16.0" },
     { name = "opencv-python", specifier = ">=4.8.0" },

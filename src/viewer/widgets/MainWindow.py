@@ -14,13 +14,22 @@ import numpy as np
 import pypinyin as pin
 import SimpleITK as sitk
 import vtk
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QActionGroup, QIcon, QImage, QPixmap, QUndoCommand, QUndoStack
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtGui import (
+    QActionGroup,
+    QDesktopServices,
+    QIcon,
+    QImage,
+    QPixmap,
+    QUndoStack,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QProgressBar,
@@ -28,20 +37,33 @@ from PySide6.QtWidgets import (
 )
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from app.configs import AppConfig, ConfigManager
-from app.mode import LOADMode, SAMMode, VIEWERMode, VIEWMode
-from path import CACHE_PATH, ICONS_PATH
-from scripts.logger import log_debug, log_error, log_info, log_warning
-from ui.MainWindow_ui import Ui_MainWindow
-from widgets.FileDocker import FileDocker
-from widgets.ImageDocker import ImageDocker
-from widgets.ImageViewer import ImageViewer
-from widgets.InfoDocker import InfoDocker
-from widgets.LoadDialog import LoadDialog
-from widgets.SegmentDocker import SegmentDocker
-from widgets.ShortcutDialog import ShortcutDialog
-from widgets.theme import ThemeManager
-from widgets.WorkerThread import (
+from viewer.app.configs import AppConfig, ConfigManager
+from viewer.app.defaults import (
+    APP_AUTHOR,
+    APP_LICENSE,
+    APP_NAME,
+    APP_VERSION,
+    DEFAULT_SHORTCUTS,
+    DISCLAIMER_TEXT,
+    PROJECT_HOMEPAGE_URL,
+    PROJECT_REPOSITORY_LABEL,
+    PROJECT_REPOSITORY_URL,
+    normalize_label_config,
+)
+from viewer.app.mode import LOADMode, SAMMode, VIEWERMode, VIEWMode
+from viewer.path import CACHE_PATH, ICONS_PATH
+from viewer.scripts.logger import log_debug, log_error, log_info, log_warning
+from viewer.ui.MainWindow_ui import Ui_MainWindow
+from viewer.widgets.FileDocker import FileDocker
+from viewer.widgets.ImageDocker import ImageDocker
+from viewer.widgets.ImageViewer import ImageViewer
+from viewer.widgets.InfoDocker import InfoDocker
+from viewer.widgets.LoadDialog import LoadDialog
+from viewer.widgets.SegmentDocker import SegmentDocker
+from viewer.widgets.ShortcutDialog import ShortcutDialog
+from viewer.widgets.commands import SegChangeCommand
+from viewer.widgets.theme import ThemeManager
+from viewer.widgets.WorkerThread import (
     BuiltThread,
     DicomWorker,
     ModelLoader,
@@ -52,47 +74,12 @@ from widgets.WorkerThread import (
 warnings.filterwarnings("ignore")
 
 
-class SegChangeCommand(QUndoCommand):
-    def __init__(self, parent, layer, old_slice, new_slice, description="修改标签"):
-        super().__init__(description)
-        self.parent = parent
-        self.layer = layer
-        # 只保存当前层的 2D 切片，降低内存与拷贝开销
-        self.old_slice = old_slice.copy() if old_slice is not None else None
-        self.new_slice = new_slice.copy()
-
-    def redo(self):
-        """重做：将数据设为新值，并更新 UI"""
-        self.parent.seg[:, :, self.layer] = self.new_slice
-        self.parent.update_all()
-
-    def undo(self):
-        """撤销：恢复为旧值，并更新 UI"""
-        if self.old_slice is not None:
-            self.parent.seg[:, :, self.layer] = self.old_slice
-            self.parent.update_all()
-
-
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
         self.setupUi(self)
         self._config = config
-
-        # 初始化标签配置
-        if self._config.label is None or len(self._config.label) == 0:
-            self._config.label = {
-                "1": {"name": "Label 1", "color": "#0000FF"},
-                "2": {"name": "Label 2", "color": "#00FF00"},
-            }
-        else:
-            # 重新排序标签序号，确保连续
-            sorted_labels = sorted(self._config.label.items(), key=lambda x: int(x[0]))
-            new_labels = {}
-            for i, (old_id, label_info) in enumerate(sorted_labels, 1):
-                new_labels[str(i)] = label_info
-            # 替换为新的标签配置
-            self._config.label = new_labels
+        self._config.label = normalize_label_config(self._config.label)
 
         self.patient_id: str = ""
 
@@ -157,19 +144,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def init_shortcuts(self):
         """从配置初始化快捷键"""
-        default_shortcuts = {
-            "load_atn": "Ctrl+O",
-            "aim_atn": "1",
-            "paint_atn": "4",
-            "add_atn": "Ctrl+A",
-            "move_atn": "2",
-            "eraser_atn": "5",
-            "save_atn": "Ctrl+S",
-            "win_atn": "3",
-            "sam_atn": "6",
-        }
-
-        shortcuts = self._config.shortcuts or default_shortcuts
+        shortcuts = self._config.shortcuts or DEFAULT_SHORTCUTS
 
         for action_name, key_sequence in shortcuts.items():
             if hasattr(self, action_name):
@@ -177,7 +152,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 action.setShortcut(key_sequence)
 
         if not self._config.shortcuts:
-            self._config.shortcuts = default_shortcuts
+            self._config.shortcuts = DEFAULT_SHORTCUTS.copy()
 
     def config(self) -> None:
         theme = self._config.theme
@@ -309,6 +284,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.crossline_action.triggered.connect(self.crossline_slot)
         self.direction_action.triggered.connect(self.direction_slot)
         self.information_action.triggered.connect(self.information_slot)
+        self.actiongithub.triggered.connect(self.open_github_page)
+        self.actionversion.triggered.connect(self.show_version_info)
 
         self.file_action.triggered.connect(self.toggle_toolBar_file)
         self.paint_action.triggered.connect(self.toggle_toolBar_draw)
@@ -587,6 +564,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             Qt.CursorShape.ArrowCursor
         )  # 切换回默认光标，避免快捷键冲突导致的光标异常
         log_info(f"快捷键已更新: {shortcuts_dict}")
+
+    def open_github_page(self):
+        """打开项目主页。"""
+        opened = QDesktopServices.openUrl(QUrl(PROJECT_HOMEPAGE_URL))
+        if not opened:
+            QMessageBox.warning(self, "打开失败", f"无法打开链接：{PROJECT_HOMEPAGE_URL}")
+
+    def show_version_info(self):
+        """显示软件信息。"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("软件信息")
+        dialog.setModal(True)
+
+        layout = QVBoxLayout(dialog)
+        info_label = QLabel(dialog)
+        info_label.setMinimumWidth(360)
+        info_label.setWordWrap(True)
+        info_label.setTextFormat(Qt.TextFormat.RichText)
+        info_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        info_label.setOpenExternalLinks(True)
+        info_label.setText(
+            f"""
+            <h3>{APP_NAME}</h3>
+            <p><b>作者名：</b>{APP_AUTHOR}</p>
+            <p><b>版本号：</b>{APP_VERSION}</p>
+            <p><b>开源协议：</b>{APP_LICENSE}</p>
+            <p><b>GitHub 地址：</b>
+            <a href="{PROJECT_REPOSITORY_URL}">{PROJECT_REPOSITORY_LABEL}</a></p>
+            <p><b>免责声明：</b>{DISCLAIMER_TEXT}</p>
+            """
+        )
+        layout.addWidget(info_label)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok, dialog)
+        button_box.accepted.connect(dialog.accept)
+        layout.addWidget(button_box)
+
+        dialog.exec()
 
     def redo_slot(self):
         """重做-清空标注"""
@@ -1355,7 +1370,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
-    from app.configs import ConfigManager
+    from viewer.app.configs import ConfigManager
 
     app = QApplication(sys.argv)
     config_manager = ConfigManager()

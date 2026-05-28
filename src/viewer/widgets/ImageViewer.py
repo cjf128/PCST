@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QGraphicsView,
 )
 
-from app.mode import SAMMode, VIEWERMode, VIEWMode
+from viewer.app.mode import SAMMode, VIEWERMode, VIEWMode
 
 
 class ImageViewer(QGraphicsView):

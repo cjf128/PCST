@@ -14,8 +14,8 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-from app.configs import ConfigManager
-from ui.ShortcutDialog_ui import Ui_Dialog
+from viewer.app.configs import ConfigManager
+from viewer.ui.ShortcutDialog_ui import Ui_Dialog
 
 
 class ShortcutDialog(QDialog, Ui_Dialog):

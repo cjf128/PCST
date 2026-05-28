@@ -18,9 +18,9 @@ from PySide6.QtWidgets import (
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.configs import ConfigManager
-from app.mode import SAMMode
-from ui.SegmentDock_ui import Ui_Form
+from viewer.app.configs import ConfigManager
+from viewer.app.mode import SAMMode
+from viewer.ui.SegmentDock_ui import Ui_Form
 
 
 class SegmentDocker(QWidget, Ui_Form):

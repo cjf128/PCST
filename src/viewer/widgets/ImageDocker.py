@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
 from PySide6.QtWidgets import QApplication, QWidget
 
-from ui.ImageDock_ui import Ui_Form
+from viewer.ui.ImageDock_ui import Ui_Form
 
 
 class ImageDocker(QWidget, Ui_Form):

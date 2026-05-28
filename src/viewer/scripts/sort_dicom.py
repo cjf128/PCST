@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 import pydicom
 
-from scripts.logger import log_debug, log_error, log_info, log_warning
+from viewer.scripts.logger import log_debug, log_error, log_info, log_warning
 
 
 @dataclass
