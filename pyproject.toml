@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "Viewer"
-version = "0.1.0"
+version = "0.3.1"
 description = "基于SAM2的PET/CT图像全身病灶分割软件"
 authors = [
     { name="Jinfr"}
@@ -20,6 +20,11 @@ dependencies = [
     "SimpleITK>=2.3.0",
     "vtk>=9.2.6",
     "pyyaml>=6.0.1",
+]
+
+[dependency-groups]
+build = [
+    "nuitka>=2.8",
 ]
 
 [project.gui-scripts]

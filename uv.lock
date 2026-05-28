@@ -276,6 +276,12 @@ wheels = [
 ]
 
 [[package]]
+name = "nuitka"
+version = "4.1.2"
+source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/e6/2e/9ea398ca1a4fc458958fdf477ae18d3395bee8c9f8950ca6f0f039ea2585/nuitka-4.1.2.tar.gz", hash = "sha256:efc2359b171d7b63046ca8ec8dee57015c3466a9df74b68a049c2c1a7e93ecee" }
+
+[[package]]
 name = "numpy"
 version = "2.4.3"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -661,7 +667,7 @@ wheels = [
 
 [[package]]
 name = "viewer"
-version = "0.1.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
@@ -673,6 +679,11 @@ dependencies = [
     { name = "pyyaml" },
     { name = "simpleitk" },
     { name = "vtk" },
+]
+
+[package.dev-dependencies]
+build = [
+    { name = "nuitka" },
 ]
 
 [package.metadata]
@@ -687,6 +698,9 @@ requires-dist = [
     { name = "simpleitk", specifier = ">=2.3.0" },
     { name = "vtk", specifier = ">=9.2.6" },
 ]
+
+[package.metadata.requires-dev]
+build = [{ name = "nuitka", specifier = ">=2.8" }]
 
 [[package]]
 name = "vtk"

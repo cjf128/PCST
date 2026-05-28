@@ -34,3 +34,4 @@ build/
 # 其他配置文件
 config.yaml
 *.ps1
+*.xml
