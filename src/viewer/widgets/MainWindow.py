@@ -78,6 +78,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.setWindowIcon(QIcon(str(ICONS_PATH / "logo_2.ico")))
         self._config = config
         self._config.label = normalize_label_config(self._config.label)
 

@@ -1,6 +1,9 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# Todo
+
+* [ ] 更换为mobile SAM2 onnx
+* [ ] 初始化状态为准星
 
 ## 项目概述
 
