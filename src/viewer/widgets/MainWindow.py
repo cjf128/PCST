@@ -233,6 +233,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.atn_group.addAction(self.paint_atn)
         self.atn_group.addAction(self.sam_atn)
         self.atn_group.addAction(self.eraser_atn)
+        self.aim_atn.setChecked(True)
+        self.viewer.mode = VIEWERMode.AIM
 
         self.btn_group = QButtonGroup(self)
         self.btn_group.setExclusive(True)

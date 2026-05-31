@@ -32,7 +32,7 @@ class ImageViewer(QGraphicsView):
         self.input_box = []
         self.parent = parent
 
-        self.mode = VIEWERMode.NORMAL
+        self.mode = VIEWERMode.AIM
         self.view_mode = VIEWMode.AXIAL
 
         self.wheel = False
