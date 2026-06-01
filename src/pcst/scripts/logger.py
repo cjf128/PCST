@@ -1,10 +1,10 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import logging
 import sys
 import time
 from pathlib import Path
 
-from viewer.path import LOGS_PATH
+from pcst.path import LOGS_PATH
 
 _logger = None
 
@@ -14,7 +14,7 @@ MAX_LOG_FILES = 7
 
 
 def _cleanup_old_logs(log_dir: Path, max_logs: int = MAX_LOG_FILES):
-    log_files = sorted(log_dir.glob("viewer_*.log"), key=lambda f: f.stat().st_mtime)
+    log_files = sorted(log_dir.glob("pcst_*.log"), key=lambda f: f.stat().st_mtime)
     for old_file in log_files[:-max_logs]:
         old_file.unlink()
 
@@ -33,7 +33,7 @@ def _create_stream_handler() -> logging.StreamHandler:
     return handler
 
 
-def setup_logger(log_dir=None, name="Viewer"):
+def setup_logger(log_dir=None, name="PCST"):
     global _logger
 
     if _logger is not None:
@@ -43,7 +43,7 @@ def setup_logger(log_dir=None, name="Viewer"):
     log_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    log_file = log_dir / f"viewer_{timestamp}.log"
+    log_file = log_dir / f"pcst_{timestamp}.log"
 
     _logger = logging.getLogger(name)
     _logger.setLevel(logging.DEBUG)

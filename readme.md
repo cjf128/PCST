@@ -1,10 +1,10 @@
-# PCViewer
+# PCST
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/) [![Framework](https://img.shields.io/badge/GUI-PySide6-green.svg)](https://doc.qt.io/qtforpython/) [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](LICENSE)
 
-PCViewer 是一款PET/CT图像全身病灶分割软件，提供了影像分析、分割和管理功能。
+PCST 是一款基于 SAM 的 PET/CT 图像全身病灶分割软件，提供影像分析、病灶分割、标注管理和 3D 可视化功能。
 
-![sam2](assets/sam2.png)
+![PCST SAM 分割](assets/mobilesam.png)
 
 ---
 
@@ -36,14 +36,14 @@ pip install -e.
 uv sync
 ```
 
-### 使用前先下载onnx模型与示例数据
+### 使用前先准备 ONNX 模型与示例数据
 
-将[sam2.1_hiera_base_plus](https://huggingface.co/datasets/Jinfr/PCViewer/tree/main)放到models/checkpoints下即可
+将 [MobileSAM ONNX](https://huggingface.co/datasets/Jinfr/PCST/tree/main) 模型放到 `src/pcst/models/checkpoints` 下，文件名保持为 `mobile_sam_encoder.onnx` 和 `mobile_sam_decoder.onnx`。
 
 ### 运行软件
 
 ```bash
-python main.py
+uv run pcst
 ```
 
 ---
@@ -62,12 +62,10 @@ python main.py
 
 ---
 
-
-
 # 参考:
 
-SAM2 Repository: https://github.com/facebookresearch/segment-anything-2
+Segment Anything: https://github.com/facebookresearch/segment-anything
 
-ONNX-SAM2-Segment-Anything: https://github.com/ibaiGorordo/ONNX-SAM2-Segment-Anything
+MobileSAM: https://github.com/ChaoningZhang/MobileSAM
 
----
+-----------------------------------------------------

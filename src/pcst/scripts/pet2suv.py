@@ -1,4 +1,4 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 from typing import Dict, Tuple
 
 import pydicom

@@ -1,4 +1,4 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import json
 import os
 import shutil
@@ -37,8 +37,8 @@ from PySide6.QtWidgets import (
 )
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from viewer.app.configs import AppConfig, ConfigManager
-from viewer.app.defaults import (
+from pcst.app.configs import AppConfig, ConfigManager
+from pcst.app.defaults import (
     APP_AUTHOR,
     APP_LICENSE,
     APP_NAME,
@@ -50,20 +50,20 @@ from viewer.app.defaults import (
     PROJECT_REPOSITORY_URL,
     normalize_label_config,
 )
-from viewer.app.mode import LOADMode, SAMMode, VIEWERMode, VIEWMode
-from viewer.path import CACHE_PATH, ICONS_PATH
-from viewer.scripts.logger import log_debug, log_error, log_info, log_warning
-from viewer.ui.MainWindow_ui import Ui_MainWindow
-from viewer.widgets.FileDocker import FileDocker
-from viewer.widgets.ImageDocker import ImageDocker
-from viewer.widgets.ImageViewer import ImageViewer
-from viewer.widgets.InfoDocker import InfoDocker
-from viewer.widgets.LoadDialog import LoadDialog
-from viewer.widgets.SegmentDocker import SegmentDocker
-from viewer.widgets.ShortcutDialog import ShortcutDialog
-from viewer.widgets.commands import SegChangeCommand
-from viewer.widgets.theme import ThemeManager
-from viewer.widgets.WorkerThread import (
+from pcst.app.mode import LOADMode, SAMMode, VIEWERMode, VIEWMode
+from pcst.path import CACHE_PATH, ICONS_PATH
+from pcst.scripts.logger import log_debug, log_error, log_info, log_warning
+from pcst.ui.MainWindow_ui import Ui_MainWindow
+from pcst.widgets.FileDocker import FileDocker
+from pcst.widgets.ImageDocker import ImageDocker
+from pcst.widgets.ImageViewer import ImageViewer
+from pcst.widgets.InfoDocker import InfoDocker
+from pcst.widgets.LoadDialog import LoadDialog
+from pcst.widgets.SegmentDocker import SegmentDocker
+from pcst.widgets.ShortcutDialog import ShortcutDialog
+from pcst.widgets.commands import SegChangeCommand
+from pcst.widgets.theme import ThemeManager
+from pcst.widgets.WorkerThread import (
     BuiltThread,
     DicomWorker,
     ModelLoader,
@@ -136,7 +136,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.model_loader.finished.connect(self.on_model_loaded)
         self.model_loader.start()
 
-        self.setWindowTitle("PC Viewer")
+        self.setWindowTitle("PCST")
 
         self.init_ui()
         self.config()
@@ -975,6 +975,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ct_alpha = self.ct_alpha if self.boxCT.isChecked() else 0
             pet_alpha = self.pet_alpha if self.boxPET.isChecked() else 0
             current_slice = cv2.addWeighted(ct_slice, ct_alpha, pet_slice, pet_alpha, 0)
+            current_slice = np.ascontiguousarray(current_slice.astype(np.uint8))
 
             change_image_mode = False
             if self.layer != self.num:
@@ -1373,7 +1374,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
-    from viewer.app.configs import ConfigManager
+    from pcst.app.configs import ConfigManager
 
     app = QApplication(sys.argv)
     config_manager = ConfigManager()

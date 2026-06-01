@@ -1,4 +1,4 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 
 import pydicom
 
-from viewer.scripts.logger import log_debug, log_error, log_info, log_warning
+from pcst.scripts.logger import log_debug, log_error, log_info, log_warning
 
 
 @dataclass

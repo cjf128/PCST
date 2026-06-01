@@ -2,9 +2,9 @@
 <html lang="zh-CN"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PCViewer — PET/CT 全身病灶分割软件</title>
+    <title>PCST — PET/CT 全身病灶分割软件</title>
     <link rel="icon" href="icons/logo_2.ico" type="image/x-icon">
-    <meta name="description" content="基于 SAM2 的 PET/CT 图像全身病灶分割软件，支持 DICOM/NIfTI 格式，集成 AI 智能分割与专业医学影像可视化。">
+    <meta name="description" content="基于 SAM 的 PET/CT 图像全身病灶分割软件，支持 DICOM/NIfTI 格式，集成 AI 智能分割与专业医学影像可视化。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -636,14 +636,14 @@
     <nav>
         <a href="#" class="nav-brand">
             <span class="nav-brand-icon">PC</span>
-            PCViewer
+            PCST
         </a>
         <ul class="nav-links">
             <li class="hide-mobile"><a href="#features">功能</a></li>
             <li class="hide-mobile"><a href="#tech">技术栈</a></li>
             <li class="hide-mobile"><a href="#download">下载</a></li>
             <li>
-                <a href="https://github.com/cjf128/PCViewer" target="_blank" class="nav-github">
+                <a href="https://github.com/cjf128/PCST" target="_blank" class="nav-github">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                     GitHub
                 </a>
@@ -658,20 +658,20 @@
         <div class="status-badge">开源项目</div>
 
         <h1>
-            <span class="gradient-text">PCViewer</span><br>
-            全身病灶分割
+            <span class="gradient-text">PCST</span><br>
+            PET/CT 全身病灶分割
         </h1>
 
         <p class="hero-subtitle">
-            基于 SAM2 的 PET/CT 医学影像分析软件，集成 AI 智能分割、多平面重建与 3D 可视化，为科研与教学提供专业级影像标注工具。
+            基于 SAM 的 PET/CT 图像全身病灶分割软件，集成 AI 智能分割、多平面重建与 3D 可视化，为科研与教学提供专业级影像标注工具。
         </p>
 
         <div class="hero-actions">
-            <a href="https://github.com/cjf128/PCViewer/releases" target="_blank" class="btn btn-primary">
+            <a href="https://github.com/cjf128/PCST/releases" target="_blank" class="btn btn-primary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 下载最新版本
             </a>
-            <a href="https://github.com/cjf128/PCViewer" target="_blank" class="btn btn-secondary">
+            <a href="https://github.com/cjf128/PCST" target="_blank" class="btn btn-secondary">
                 <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 查看源码
             </a>
@@ -679,7 +679,7 @@
 
         <div class="hero-screenshot">
             <div class="screenshot-frame">
-                <img src="assert/image.png" alt="PCViewer 主界面截图">
+                <img src="assets/image.png" alt="PCST 主界面截图">
             </div>
         </div>
     </section>
@@ -687,7 +687,7 @@
     <!-- Stats -->
     <div class="stats-bar">
         <div class="stat">
-            <div class="stat-value">SAM2</div>
+            <div class="stat-value">SAM</div>
             <div class="stat-label">分割模型</div>
         </div>
         <div class="stat">
@@ -719,7 +719,7 @@
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                     </div>
                     <h3>AI 智能分割</h3>
-                    <p>集成 SAM2 分割模型，支持 ONNX 加速推理，实现 PET/CT 图像的自动病灶分割与手动标注。</p>
+                    <p>集成 SAM 分割模型，支持 ONNX 加速推理，实现 PET/CT 图像的自动病灶分割与手动标注。</p>
                 </div>
 
                 <div class="feature-card">
@@ -809,13 +809,12 @@
 
             <div class="code-block">
                 <span class="comment"># 克隆仓库</span><br>
-                <span class="prompt">$</span> <span class="cmd">git clone https://github.com/cjf128/PCViewer.git</span><br>
-                <span class="prompt">$</span> <span class="cmd">cd PCViewer</span><br><br>
-                <span class="comment"># 安装依赖（任选其一）</span><br>
-                <span class="prompt">$</span> <span class="cmd">pip install -r requirements.txt</span><br>
+                <span class="prompt">$</span> <span class="cmd">git clone https://github.com/cjf128/PCST.git</span><br>
+                <span class="prompt">$</span> <span class="cmd">cd PCST</span><br><br>
+                <span class="comment"># 安装依赖</span><br>
                 <span class="prompt">$</span> <span class="cmd">uv sync</span><br><br>
                 <span class="comment"># 运行应用</span><br>
-                <span class="prompt">$</span> <span class="cmd">python main.py</span>
+                <span class="prompt">$</span> <span class="cmd">uv run pcst</span>
             </div>
         </div>
     </section>
@@ -825,7 +824,7 @@
         <div class="container">
             <div class="section-header">
                 <div class="section-label">下载</div>
-                <h2 class="section-title">获取 PCViewer</h2>
+                <h2 class="section-title">获取 PCST</h2>
                 <p class="section-desc">选择适合您的安装方式</p>
             </div>
 
@@ -836,7 +835,7 @@
                     </div>
                     <h3>源码运行</h3>
                     <p>Python 3.12+ 环境，完整功能与可定制性</p>
-                    <a href="https://github.com/cjf128/PCViewer" target="_blank" class="btn btn-secondary" style="width:100%;justify-content:center;">
+                    <a href="https://github.com/cjf128/PCST" target="_blank" class="btn btn-secondary" style="width:100%;justify-content:center;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                         查看仓库
                     </a>
@@ -848,7 +847,7 @@
                     </div>
                     <h3>Windows 安装包</h3>
                     <p>一键安装，无需配置 Python 环境</p>
-                    <a href="https://github.com/cjf128/PCViewer/releases" target="_blank" class="btn btn-primary" style="width:100%;justify-content:center;">
+                    <a href="https://github.com/cjf128/PCST/releases" target="_blank" class="btn btn-primary" style="width:100%;justify-content:center;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Releases 下载
                     </a>
@@ -871,12 +870,12 @@
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="https://github.com/cjf128/PCViewer" target="_blank">GitHub 仓库</a>
-                <a href="https://github.com/cjf128/PCViewer/releases" target="_blank">Releases</a>
-                <a href="https://github.com/cjf128/PCViewer/issues" target="_blank">Issues</a>
-                <a href="https://github.com/cjf128/PCViewer/blob/main/LICENSE" target="_blank">Apache 2.0</a>
+                <a href="https://github.com/cjf128/PCST" target="_blank">GitHub 仓库</a>
+                <a href="https://github.com/cjf128/PCST/releases" target="_blank">Releases</a>
+                <a href="https://github.com/cjf128/PCST/issues" target="_blank">Issues</a>
+                <a href="https://github.com/cjf128/PCST/blob/main/LICENSE" target="_blank">Apache 2.0</a>
             </div>
-            <p class="footer-copy">© 2026 PCViewer · Jinfr · Apache License 2.0</p>
+            <p class="footer-copy">© 2026 PCST · Jinfr · Apache License 2.0</p>
         </div>
     </footer>
 
@@ -886,7 +885,7 @@
     </div>
 
     <footer>
-      <div>© 2026 Viewer 项目</div>
+      <div>© 2026 PCST 项目</div>
     </footer>
   </div>
 </body>

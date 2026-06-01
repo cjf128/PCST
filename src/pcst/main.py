@@ -1,12 +1,12 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import sys
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from viewer.app.app import App
-from viewer.path import ICONS_PATH
-from viewer.scripts.logger import log_info, setup_logger
+from pcst.app.app import App
+from pcst.path import ICONS_PATH
+from pcst.scripts.logger import log_info, setup_logger
 
 
 def main() -> int:

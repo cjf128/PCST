@@ -1,6 +1,6 @@
-from viewer.app.configs import AppConfig, ConfigManager
-from viewer.widgets.theme import ThemeManager
-from viewer.widgets.MainWindow import MainWindow
+from pcst.app.configs import AppConfig, ConfigManager
+from pcst.widgets.theme import ThemeManager
+from pcst.widgets.MainWindow import MainWindow
 
 
 class App:

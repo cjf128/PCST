@@ -1,10 +1,10 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 from pathlib import Path
 
 import SimpleITK as sitk
 
-from viewer.scripts.basic import read_dicom_series, resize_image
-from viewer.scripts.pet2suv import pet_to_suv
+from pcst.scripts.basic import read_dicom_series, resize_image
+from pcst.scripts.pet2suv import pet_to_suv
 
 
 def process_dicom_data(ct_folder: str, pet_folder: str):

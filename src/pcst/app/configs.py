@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import yaml
 
-from viewer.path import BASE_PATH
+from pcst.path import BASE_PATH
 
 
 @dataclass

@@ -8,8 +8,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import QApplication, QInputDialog, QMenu, QMessageBox, QWidget
 
-from viewer.app.configs import ConfigManager
-from viewer.ui.FileDock_ui import Ui_Form
+from pcst.app.configs import ConfigManager
+from pcst.ui.FileDock_ui import Ui_Form
 
 
 class FileDocker(QWidget, Ui_Form):
@@ -185,7 +185,7 @@ class FileDocker(QWidget, Ui_Form):
                         new_data[str(new_id)] = self.main_window._config.data[old_id]
                     self.main_window._config.data = new_data
 
-                    from viewer.app.configs import ConfigManager
+                    from pcst.app.configs import ConfigManager
 
                     config_manager = ConfigManager()
                     config_manager.save(self.main_window._config)

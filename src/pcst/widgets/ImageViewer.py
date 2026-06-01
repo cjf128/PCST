@@ -1,4 +1,4 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import sys
 from pathlib import Path
 
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QGraphicsView,
 )
 
-from viewer.app.mode import SAMMode, VIEWERMode, VIEWMode
+from pcst.app.mode import SAMMode, VIEWERMode, VIEWMode
 
 
 class ImageViewer(QGraphicsView):

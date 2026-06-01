@@ -10,21 +10,47 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Source Archive
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --group build --frozen
+
+      - name: Build Windows app with Nuitka
+        shell: pwsh
+        run: .\nuitka-built.ps1 -Jobs 2
+
+      - name: Package main.dist
+        shell: pwsh
         run: |
-          zip -r PCViewer-${{ github.ref_name }}-source.zip . \
-            -x ".git/*" -x ".github/*" -x ".venv/*" -x ".ruff_cache/*" -x "__pycache__/*" -x "*.pyc" -x "uv.lock" -x "logs/*" -x "data/*"
+          $distPath = "dist\nuitka\main.dist"
+          if (-not (Test-Path $distPath)) {
+            throw "Nuitka output not found: $distPath"
+          }
+
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Compress-Archive `
+            -Path $distPath `
+            -DestinationPath "release\PCST-${{ github.ref_name }}-windows-main.dist.zip" `
+            -Force
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          body: 
           generate_release_notes: true
+          files: release/*.zip

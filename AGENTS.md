@@ -1,13 +1,8 @@
 # AGENTS.md
 
-# Todo
-
-* [ ] 更换为mobile SAM2 onnx
-* [ ] 初始化状态为准星
-
 ## 项目概述
 
-PCViewer 是一款基于 PySide6 的 PET/CT 图像全身病灶分割桌面软件，支持横断面/矢状面/冠状面及 3D 视图，集成 SAM2（Segment Anything Model 2）ONNX 模型实现半自动分割。
+PCST 是一款基于 PySide6 和 SAM 的 PET/CT 图像全身病灶分割桌面软件，支持横断面/矢状面/冠状面及 3D 视图，集成 MobileSAM ONNX 模型实现半自动分割。
 
 ## 开发命令
 
@@ -31,7 +26,7 @@ app/
   configs.py     → AppConfig 数据类 + ConfigManager（YAML 读写 config.yaml）
   mode.py        → 枚举：VIEWERMode / LOADMode / VIEWMode / SAMMode
 models/
-  sam2.py        → SAM2Image 封装：Encoder + Decoder ONNX 推理
+  mobile_sam.py  → MobileSAMOnnxImage 封装：Encoder + Decoder ONNX 推理
 widgets/
   MainWindow.py  → 主窗口：所有业务逻辑中心（图像加载、标注绘制、SAM调用、3D重建、撤销重做）
   ImageViewer.py → QGraphicsView 子类：图像渲染、鼠标交互、标注绘制

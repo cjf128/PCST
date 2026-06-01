@@ -1,4 +1,4 @@
-# Copyright (c) 2026 PCViewer Jinfr
+# Copyright (c) 2026 PCST Jinfr
 import shutil
 from pathlib import Path
 from typing import Tuple
@@ -9,10 +9,10 @@ import vtk
 from PySide6.QtCore import QThread, Signal
 from vtkmodules.util import numpy_support
 
-from viewer.path import MODELS_PATH
-from viewer.scripts.logger import log_debug, log_error, log_info
-from viewer.scripts.preprocess import process_dicom_data, process_nifti_data
-from viewer.scripts.sort_dicom import sort_dicom_series
+from pcst.path import MODELS_PATH
+from pcst.scripts.logger import log_debug, log_error, log_info
+from pcst.scripts.preprocess import process_dicom_data, process_nifti_data
+from pcst.scripts.sort_dicom import sort_dicom_series
 
 
 class DicomWorker(QThread):
@@ -141,8 +141,8 @@ class SamThread(QThread):
                 x1, y1, x2, y2 = self._normalize_box()
                 masks = self.predictor.set_box(((x1, y1), (x2, y2)), label_id=0)
                 mask = masks[0].astype(np.uint8)
-            elif self.mode in ["ADD", "SUB"]:
-                # ADD或SUB模式
+            elif self.mode == "ADD":
+                # ADD模式
                 point_coords = self.input_data
                 masks = self.predictor.add_point(point_coords, True, label_id=0)
                 mask = masks[0].astype(np.uint8)
@@ -162,25 +162,30 @@ class SamThread(QThread):
 class ModelLoader(QThread):
     finished = Signal(object)
 
-    _ENCODER_MODEL = "checkpoints/sam2.1_hiera_base_plus_encoder.onnx"
-    _DECODER_MODEL = "checkpoints/sam2.1_hiera_base_plus_decoder.onnx"
+    _ENCODER_MODEL = "checkpoints/mobile_sam_encoder.onnx"
+    _DECODER_MODEL = "checkpoints/mobile_sam_decoder.onnx"
 
     def run(self):
-        log_info("开始加载SAM2模型")
+        log_info("开始加载MobileSAM ONNX模型")
         try:
-            from viewer.models.sam2 import SAM2Image
+            from pcst.models.mobile_sam import MobileSAMOnnxImage
 
             encoder_path = MODELS_PATH / self._ENCODER_MODEL
             decoder_path = MODELS_PATH / self._DECODER_MODEL
 
-            log_debug(f"编码器路径: {encoder_path}")
-            log_debug(f"解码器路径: {decoder_path}")
+            log_debug(f"MobileSAM编码器路径: {encoder_path}")
+            log_debug(f"MobileSAM解码器路径: {decoder_path}")
 
-            predictor = SAM2Image(str(encoder_path), str(decoder_path))
-            log_info("SAM2模型加载完成")
+            if not encoder_path.exists() or not decoder_path.exists():
+                raise FileNotFoundError(
+                    f"MobileSAM ONNX files not found in {MODELS_PATH}"
+                )
+
+            predictor = MobileSAMOnnxImage(encoder_path, decoder_path)
+            log_info("MobileSAM ONNX模型加载完成")
             self.finished.emit(predictor)
         except Exception as e:
-            log_error(f"加载SAM2模型时发生错误: {e}")
+            log_error(f"加载MobileSAM ONNX模型时发生错误: {e}")
 
 
 class BuiltThread(QThread):

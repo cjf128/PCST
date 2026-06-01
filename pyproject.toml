@@ -3,9 +3,9 @@ requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "Viewer"
-version = "0.3.1"
-description = "基于SAM2的PET/CT图像全身病灶分割软件"
+name = "PCST"
+version = "0.4.0"
+description = "基于 SAM 的 PET/CT 图像全身病灶分割软件"
 authors = [
     { name="Jinfr"}
 ]
@@ -28,7 +28,7 @@ build = [
 ]
 
 [project.gui-scripts]
-viewer = "viewer.main:main"
+pcst = "pcst.main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/viewer"]
+packages = ["src/pcst"]

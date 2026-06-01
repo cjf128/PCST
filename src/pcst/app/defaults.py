@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-APP_NAME = "PCViewer"
+APP_NAME = "PCST"
 APP_AUTHOR = "Jinfr"
-APP_VERSION = "0.3.1"
+APP_VERSION = "0.4.0"
 APP_LICENSE = "Apache License 2.0"
-PROJECT_HOMEPAGE_URL = "https://cjf128.github.io/PCViewer/"
-PROJECT_REPOSITORY_URL = "https://github.com/cjf128/PCViewer"
-PROJECT_REPOSITORY_LABEL = "cjf128/PCViewer"
+PROJECT_HOMEPAGE_URL = "https://cjf128.github.io/PCST/"
+PROJECT_REPOSITORY_URL = "https://github.com/cjf128/PCST"
+PROJECT_REPOSITORY_LABEL = "cjf128/PCST"
 DISCLAIMER_TEXT = (
     "本软件仅用于科研与教学目的，不作为临床诊断或治疗决策的直接依据。"
 )
