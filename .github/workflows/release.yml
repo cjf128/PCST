@@ -36,8 +36,38 @@ jobs:
       - name: Package PCST.dist
         shell: pwsh
         run: |
-          zip -r PCViewer-${{ github.ref_name }}-source.zip . \
-            -x ".git/*" -x ".github/*" -x ".venv/*" -x ".ruff_cache/*" -x "__pycache__/*" -x "*.pyc" -x "uv.lock" -x "logs/*" -x "data/*"
+          $distRoot = "dist\nuitka"
+          if (-not (Test-Path $distRoot)) {
+            throw "Nuitka output root not found: $distRoot"
+          }
+
+          Write-Host "Nuitka output directories:"
+          Get-ChildItem -Path $distRoot -Directory | Select-Object -ExpandProperty FullName
+
+          $preferredDistPath = Join-Path $distRoot "PCST.dist"
+          if (Test-Path $preferredDistPath) {
+            $distPath = (Resolve-Path $preferredDistPath).Path
+          }
+          else {
+            $distDirs = @(Get-ChildItem -Path $distRoot -Directory -Filter "*.dist")
+            if ($distDirs.Count -ne 1) {
+              throw "Expected exactly one Nuitka .dist directory under $distRoot, found $($distDirs.Count)."
+            }
+
+            Rename-Item -LiteralPath $distDirs[0].FullName -NewName "PCST.dist"
+            $distPath = (Resolve-Path $preferredDistPath).Path
+          }
+
+          $exePath = Join-Path $distPath "PCST.exe"
+          if (-not (Test-Path $exePath)) {
+            throw "PCST.exe not found in Nuitka output: $distPath"
+          }
+
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Compress-Archive `
+            -Path $distPath `
+            -DestinationPath "release\PCST-${{ github.ref_name }}-windows.zip" `
+            -Force
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
