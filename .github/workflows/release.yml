@@ -27,35 +27,131 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
+        shell: pwsh
         run: uv sync --group build --frozen
+
+      - name: Download MobileSAM ONNX models
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ProgressPreference = "SilentlyContinue"
+
+          $checkpointDir = "src\pcst\models\checkpoints"
+          New-Item -ItemType Directory -Force -Path $checkpointDir | Out-Null
+
+          $models = @(
+            @{
+              Name = "mobile_sam_encoder.onnx"
+              Url = "https://huggingface.co/datasets/Jinfr/PCST/resolve/main/mobile_sam_encoder.onnx"
+            },
+            @{
+              Name = "mobile_sam_decoder.onnx"
+              Url = "https://huggingface.co/datasets/Jinfr/PCST/resolve/main/mobile_sam_decoder.onnx"
+            }
+          )
+
+          foreach ($model in $models) {
+            $target = Join-Path $checkpointDir $model.Name
+            Write-Host "Downloading $($model.Name)"
+
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              try {
+                Invoke-WebRequest -Uri $model.Url -OutFile $target
+                break
+              }
+              catch {
+                if ($attempt -eq 3) {
+                  throw
+                }
+
+                Start-Sleep -Seconds 5
+              }
+            }
+
+            $file = Get-Item $target
+            if ($file.Length -lt 10MB) {
+              throw "Downloaded model is unexpectedly small: $target ($($file.Length) bytes)"
+            }
+          }
+
+      - name: Validate Nuitka build inputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $requiredFiles = @(
+            "nuitka-built.ps1",
+            "src\pcst\main.py",
+            "src\pcst\icons\logo_2.ico",
+            "src\pcst\models\checkpoints\mobile_sam_encoder.onnx",
+            "src\pcst\models\checkpoints\mobile_sam_decoder.onnx"
+          )
+
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path $file)) {
+              throw "Required build file not found: $file"
+            }
+          }
 
       - name: Build Windows app with Nuitka
         shell: pwsh
-        run: .\nuitka-built.ps1 -Jobs 2
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $PSNativeCommandUseErrorActionPreference = $true
+          }
+
+          .\nuitka-built.ps1 -OutputDir "dist\nuitka" -OutputName "PCST.exe" -Jobs 2
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Nuitka failed with exit code $LASTEXITCODE"
+          }
 
       - name: Package PCST.dist
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $distRoot = "dist\nuitka"
-          if (-not (Test-Path $distRoot)) {
-            throw "Nuitka output root not found: $distRoot"
-          }
+          $distDirs = @()
 
-          Write-Host "Nuitka output directories:"
-          Get-ChildItem -Path $distRoot -Directory | Select-Object -ExpandProperty FullName
+          if (Test-Path $distRoot) {
+            Write-Host "Nuitka output directories:"
+            Get-ChildItem -Path $distRoot -Directory | Select-Object -ExpandProperty FullName
+
+            $distDirs = @(Get-ChildItem -Path $distRoot -Directory -Filter "*.dist")
+          }
+          else {
+            Write-Host "Nuitka output root was not found: $distRoot"
+            Write-Host "Searching workspace for .dist directories:"
+
+            $distDirs = @(
+              Get-ChildItem -Path . -Directory -Recurse -Filter "*.dist" -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.FullName -notmatch "\\\.git\\" -and
+                  $_.FullName -notmatch "\\\.venv\\" -and
+                  $_.FullName -notmatch "\\\.uv-cache\\"
+                }
+            )
+
+            $distDirs | Select-Object -ExpandProperty FullName
+          }
 
           $preferredDistPath = Join-Path $distRoot "PCST.dist"
           if (Test-Path $preferredDistPath) {
             $distPath = (Resolve-Path $preferredDistPath).Path
           }
           else {
-            $distDirs = @(Get-ChildItem -Path $distRoot -Directory -Filter "*.dist")
             if ($distDirs.Count -ne 1) {
-              throw "Expected exactly one Nuitka .dist directory under $distRoot, found $($distDirs.Count)."
+              throw "Expected exactly one Nuitka .dist directory, found $($distDirs.Count)."
             }
 
-            Rename-Item -LiteralPath $distDirs[0].FullName -NewName "PCST.dist"
-            $distPath = (Resolve-Path $preferredDistPath).Path
+            $targetParent = Split-Path -Parent $distDirs[0].FullName
+            $targetDistPath = Join-Path $targetParent "PCST.dist"
+
+            if ($distDirs[0].FullName -ne $targetDistPath) {
+              Rename-Item -LiteralPath $distDirs[0].FullName -NewName "PCST.dist"
+            }
+
+            $distPath = (Resolve-Path $targetDistPath).Path
           }
 
           $exePath = Join-Path $distPath "PCST.exe"
