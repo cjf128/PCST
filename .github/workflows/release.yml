@@ -33,19 +33,11 @@ jobs:
         shell: pwsh
         run: .\nuitka-built.ps1 -Jobs 2
 
-      - name: Package main.dist
+      - name: Package PCST.dist
         shell: pwsh
         run: |
-          $distPath = "dist\nuitka\main.dist"
-          if (-not (Test-Path $distPath)) {
-            throw "Nuitka output not found: $distPath"
-          }
-
-          New-Item -ItemType Directory -Force -Path release | Out-Null
-          Compress-Archive `
-            -Path $distPath `
-            -DestinationPath "release\PCST-${{ github.ref_name }}-windows-main.dist.zip" `
-            -Force
+          zip -r PCViewer-${{ github.ref_name }}-source.zip . \
+            -x ".git/*" -x ".github/*" -x ".venv/*" -x ".ruff_cache/*" -x "__pycache__/*" -x "*.pyc" -x "uv.lock" -x "logs/*" -x "data/*"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -53,4 +45,5 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           generate_release_notes: true
+          overwrite_files: true
           files: release/*.zip
