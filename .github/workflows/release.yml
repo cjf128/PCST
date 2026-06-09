@@ -3,7 +3,7 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
@@ -81,7 +81,7 @@ jobs:
           $requiredFiles = @(
             "nuitka-built.ps1",
             "src\pcst\main.py",
-            "src\pcst\icons\logo_2.ico",
+            "src\pcst\icons\logo.ico",
             "src\pcst\models\checkpoints\mobile_sam_encoder.onnx",
             "src\pcst\models\checkpoints\mobile_sam_decoder.onnx"
           )

@@ -13,7 +13,6 @@ Push-Location $ProjectRoot
 try {
     uv run --group build nuitka `
         --standalone `
-        --remove-output `
         --windows-console-mode=disable `
         --enable-plugin=pyside6 `
         --include-qt-plugins=sensible,styles `
@@ -24,7 +23,7 @@ try {
         --include-data-dir="src\pcst\icons=icons" `
         --include-data-files="src\pcst\models\checkpoints\mobile_sam_encoder.onnx=models\checkpoints\mobile_sam_encoder.onnx" `
         --include-data-files="src\pcst\models\checkpoints\mobile_sam_decoder.onnx=models\checkpoints\mobile_sam_decoder.onnx" `
-        --windows-icon-from-ico="src\pcst\icons\logo_2.ico" `
+        --windows-icon-from-ico="src\pcst\icons\logo.ico" `
         --output-dir="$OutputPath" `
         --show-progress `
         --assume-yes `

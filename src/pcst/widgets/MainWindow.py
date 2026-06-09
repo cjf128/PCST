@@ -78,7 +78,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.setWindowIcon(QIcon(str(ICONS_PATH / "logo_2.ico")))
+        self.setWindowIcon(QIcon(str(ICONS_PATH / "logo.ico")))
         self._config = config
         self._config.label = normalize_label_config(self._config.label)
 
@@ -859,6 +859,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.crosshair_voxel_xyz is None:
             self.viewer.position[0] = self.viewer.width() // 2
             self.viewer.position[1] = self.viewer.height() // 2
+        if self.load_mode == LOADMode.RELOAD:
+            self.crossline_action.setChecked(True)
+            self.viewer.cross_show = True
+            self.viewer.viewport().update()
 
         self.stackedWidget.setCurrentIndex(0)
 
@@ -958,6 +962,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if self.stackedWidget.currentIndex() == 1:
                 self.view_3d_built()
 
+    def _handle_sam_error(self, _error_message=""):
+        self.dialog.close()
+        self.aim_atn.setChecked(True)
+        self._set_mode(VIEWERMode.AIM)
+        QMessageBox.warning(
+            self,
+            "警告",
+            "SAM分割出现故障！",
+            QMessageBox.StandardButton.Ok,
+        )
+
     def operation(self, input_data):
         log_debug(f"SAM操作开始, 输入数据: {input_data}")
         self.dialog.setWindowTitle("运行中...")
@@ -1021,9 +1036,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 change_image_mode,
             )
             self.SamThread.finished.connect(on_sam_finished)
+            self.SamThread.error.connect(self._handle_sam_error)
             self.SamThread.start()
         except Exception as e:
             log_error(f"SAM操作失败: {e}")
+            self._handle_sam_error()
             return
 
     def normalize(self, slice, ww, wl):

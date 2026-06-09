@@ -14,7 +14,7 @@ def main() -> int:
     log_info("应用程序启动")
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(str(ICONS_PATH / "logo_2.ico")))
+    app.setWindowIcon(QIcon(str(ICONS_PATH / "logo.ico")))
     app.setStyle("Fusion")
 
     application = App()

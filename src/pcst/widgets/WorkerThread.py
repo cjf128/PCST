@@ -1,5 +1,6 @@
 # Copyright (c) 2026 PCST Jinfr
 import shutil
+import traceback
 from pathlib import Path
 from typing import Tuple
 
@@ -111,6 +112,7 @@ class NiftiWorker(QThread):
 
 class SamThread(QThread):
     finished = Signal(np.ndarray)
+    error = Signal(str)
 
     def __init__(
         self, predictor, current_slice, input_data, mode, change_image_mode=True
@@ -147,16 +149,18 @@ class SamThread(QThread):
                 masks = self.predictor.add_point(point_coords, True, label_id=0)
                 mask = masks[0].astype(np.uint8)
             else:
-                log_error(f"未知的SAM模式: {self.mode}")
+                error_message = f"未知的SAM模式: {self.mode}"
+                log_error(error_message)
+                self.error.emit(error_message)
                 return
 
             log_debug(f"SAM预测完成, mask形状: {mask.shape}")
             self.finished.emit(mask)
         except Exception as e:
-            log_error(f"SAM预测时发生错误: {e}")
-            import traceback
-
-            traceback.print_exc()
+            error_message = f"SAM预测时发生错误: {e}"
+            log_error(error_message)
+            log_error(traceback.format_exc())
+            self.error.emit(error_message)
 
 
 class ModelLoader(QThread):
