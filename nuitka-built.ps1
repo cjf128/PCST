@@ -21,6 +21,7 @@ try {
         --include-package=pydicom.pixels `
         --include-module=pcst.models.mobile_sam `
         --include-data-dir="src\pcst\icons=icons" `
+        --include-data-dir="schemas=schemas" `
         --include-data-files="src\pcst\models\checkpoints\mobile_sam_encoder.onnx=models\checkpoints\mobile_sam_encoder.onnx" `
         --include-data-files="src\pcst\models\checkpoints\mobile_sam_decoder.onnx=models\checkpoints\mobile_sam_decoder.onnx" `
         --windows-icon-from-ico="src\pcst\icons\logo.ico" `

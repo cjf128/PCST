@@ -15,6 +15,7 @@ if __name__ == "__main__":
 
 
 from pcst.app.configs import ConfigManager
+from pcst.app.defaults import DEFAULT_SHORTCUTS
 from pcst.ui.ShortcutDialog_ui import Ui_Dialog
 
 
@@ -32,14 +33,15 @@ class ShortcutDialog(QDialog, Ui_Dialog):
         # 快捷键编辑控件与 MainWindow action 的映射
         self._shortcuts_mapping = {
             "load_atn": self.load_Edit,
-            "aim_atn": self.aim_edit,
-            "paint_atn": self.paint_Edit,
+            "btn_aim": self.aim_edit,
+            "btn_paint": self.paint_Edit,
             "add_atn": self.add_Edit,
-            "move_atn": self.move_Edit,
-            "eraser_atn": self.eraser_Edit,
+            "btn_move": self.move_Edit,
+            "btn_eraser": self.eraser_Edit,
             "save_atn": self.save_Edit,
-            "win_atn": self.win_Edit,
-            "sam_atn": self.SAM_Edit,
+            "btn_win": self.win_Edit,
+            "btn_sam": self.SAM_Edit,
+            "btn_box": self.box_edit,
         }
 
         self.setWindowTitle("快捷键设置")
@@ -72,8 +74,23 @@ class ShortcutDialog(QDialog, Ui_Dialog):
         """从配置和 MainWindow 加载当前的快捷键设置"""
         # 优先从 config 加载
         if self._config and self._config.shortcuts:
+            legacy_names = {
+                "btn_aim": "aim_atn",
+                "btn_paint": "paint_atn",
+                "btn_move": "move_atn",
+                "btn_eraser": "eraser_atn",
+                "btn_win": "win_atn",
+                "btn_sam": "sam_atn",
+                "btn_box": "box_atn",
+            }
             for action_name, edit_widget in self._shortcuts_mapping.items():
-                key_sequence = self._config.shortcuts.get(action_name, "")
+                key_sequence = self._config.shortcuts.get(action_name)
+                if key_sequence is None:
+                    key_sequence = self._config.shortcuts.get(
+                        legacy_names.get(action_name, ""), ""
+                    )
+                if key_sequence is None or key_sequence == "":
+                    key_sequence = DEFAULT_SHORTCUTS.get(action_name, "")
                 edit_widget.blockSignals(True)
                 edit_widget.setKeySequence(key_sequence)
                 edit_widget.blockSignals(False)
@@ -143,14 +160,15 @@ class ShortcutDialog(QDialog, Ui_Dialog):
         """获取 action 的可读标签"""
         labels = {
             "load_atn": "导入数据",
-            "aim_atn": "准心工具",
-            "paint_atn": "标注工具",
+            "btn_aim": "准心工具",
+            "btn_paint": "标注工具",
             "add_atn": "导入标注",
-            "move_atn": "移动工具",
-            "eraser_atn": "擦除工具",
+            "btn_move": "移动工具",
+            "btn_eraser": "擦除工具",
             "save_atn": "保存文件",
-            "win_atn": "调窗工具",
-            "sam_atn": "SAM工具",
+            "btn_win": "调窗工具",
+            "btn_sam": "SAM工具",
+            "btn_box": "三维框工具",
         }
         return labels.get(action_name, action_name)
 

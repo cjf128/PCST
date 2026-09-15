@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pcst.local/schema/medical-3d-box/dataset-1.0.0.json",
+  "title": "PCST medical 3D box dataset manifest",
+  "type": "object",
+  "required": ["schema", "schema_version", "dimension", "annotation_type", "coordinate_convention", "overlap_policy", "classes"],
+  "properties": {
+    "schema": {"const": "medical-3d-box"},
+    "schema_version": {"const": "1.0.0"},
+    "dimension": {"const": 3},
+    "annotation_type": {"const": "aabb"},
+    "coordinate_convention": {
+      "type": "object",
+      "required": ["bbox_space", "voxel_axes", "bbox_representation", "min_boundary", "max_boundary", "world_coordinate_system", "physical_unit"],
+      "properties": {
+        "bbox_space": {"const": "voxel_index"},
+        "voxel_axes": {"const": "IJK"},
+        "bbox_representation": {"const": "min_max"},
+        "min_boundary": {"const": "inclusive"},
+        "max_boundary": {"const": "exclusive"},
+        "world_coordinate_system": {"const": "LPS"},
+        "physical_unit": {"const": "mm"}
+      },
+      "additionalProperties": false
+    },
+    "overlap_policy": {"const": "allowed"},
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {"type": "integer", "minimum": 0},
+          "name": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
