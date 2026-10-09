@@ -6,10 +6,10 @@ from typing import Tuple
 
 import numpy as np
 import SimpleITK as sitk
-import vtk
 from PySide6.QtCore import QThread, Signal
-from vtkmodules.util import numpy_support
 
+from pcst.core.image import LoadedVolume
+from pcst.core.geometry import VolumeGeometry
 from pcst.path import MODELS_PATH
 from pcst.scripts.logger import log_debug, log_error, log_info
 from pcst.scripts.preprocess import process_dicom_data, process_nifti_data
@@ -17,7 +17,8 @@ from pcst.scripts.sort_dicom import sort_dicom_series
 
 
 class DicomWorker(QThread):
-    finished = Signal(np.ndarray, np.ndarray, tuple, tuple, tuple, dict)
+    finished = Signal(object)
+    error = Signal(str)
 
     def __init__(self, pet_file: Path, ct_file: Path, cache_folder: Path):
         super().__init__()
@@ -43,13 +44,20 @@ class DicomWorker(QThread):
 
         if not success_ct or not success_pet:
             log_error("DICOM文件处理失败")
+            self.error.emit("DICOM 文件分拣失败，请检查 CT/PET 序列。")
             return
 
         log_info("开始处理DICOM数据")
         try:
-            ct_data, pet_data, ct_spacing, pet_spacing, pet_shape = process_dicom_data(
-                str(ct_folder), str(pet_folder)
-            )
+            (
+                ct_data,
+                pet_data,
+                ct_spacing,
+                pet_spacing,
+                pet_shape,
+                ct_geometry,
+                pet_geometry,
+            ) = process_dicom_data(str(ct_folder), str(pet_folder))
 
             # 提取患者信息
             patient_info = {}
@@ -81,14 +89,22 @@ class DicomWorker(QThread):
                 f"DICOM数据处理完成, CT形状: {ct_data.shape}, PET形状: {pet_shape}"
             )
             self.finished.emit(
-                ct_data, pet_data, ct_spacing, pet_spacing, pet_shape, patient_info
+                LoadedVolume(
+                    ct_data=ct_data,
+                    pet_data=pet_data,
+                    ct_geometry=ct_geometry,
+                    pet_geometry=pet_geometry,
+                    patient_info=patient_info,
+                )
             )
         except Exception as e:
             log_error(f"处理DICOM数据时发生错误: {e}")
+            self.error.emit(str(e))
 
 
 class NiftiWorker(QThread):
-    finished = Signal(np.ndarray, np.ndarray, tuple, tuple, tuple)
+    finished = Signal(object)
+    error = Signal(str)
 
     def __init__(self, pet_path: Path, ct_path: Path):
         super().__init__()
@@ -98,16 +114,30 @@ class NiftiWorker(QThread):
     def run(self):
         log_info("开始处理NIfTI数据")
         try:
-            ct_data, pet_data, ct_spacing, pet_spacing, pet_shape = process_nifti_data(
-                self.pet_path, self.ct_path
-            )
+            (
+                ct_data,
+                pet_data,
+                ct_spacing,
+                pet_spacing,
+                pet_shape,
+                ct_geometry,
+                pet_geometry,
+            ) = process_nifti_data(self.pet_path, self.ct_path)
 
             log_info(
                 f"NIfTI数据处理完成, CT形状: {ct_data.shape}, PET形状: {pet_shape}"
             )
-            self.finished.emit(ct_data, pet_data, ct_spacing, pet_spacing, pet_shape)
+            self.finished.emit(
+                LoadedVolume(
+                    ct_data=ct_data,
+                    pet_data=pet_data,
+                    ct_geometry=ct_geometry,
+                    pet_geometry=pet_geometry,
+                )
+            )
         except Exception as e:
             log_error(f"处理NIfTI数据时发生错误: {e}")
+            self.error.emit(str(e))
 
 
 class SamThread(QThread):
@@ -194,19 +224,25 @@ class ModelLoader(QThread):
 
 class BuiltThread(QThread):
     actor_ready = Signal(object)
+    error = Signal(str)
 
     def __init__(
         self,
         data: np.ndarray,
         spacing: Tuple[float, float, float],
         label_config: None | dict,
+        geometry: VolumeGeometry | None = None,
     ):
         super().__init__()
         self.data = data
         self.spacing = spacing
         self.label_config = label_config or {}
+        self.geometry = geometry
 
-    def _create_lookup_table(self) -> vtk.vtkLookupTable:
+    def _create_lookup_table(self):
+        # VTK 是原生依赖，只在真正开始 3D 重建的后台线程中加载。
+        from vtkmodules.vtkCommonCore import vtkLookupTable
+
         # 计算需要的颜色表大小
         max_label = 0
         if self.label_config:
@@ -214,7 +250,7 @@ class BuiltThread(QThread):
         # 确保至少有3个颜色值
         num_values = max(max_label + 1, 3)
 
-        lut = vtk.vtkLookupTable()
+        lut = vtkLookupTable()
         lut.SetNumberOfTableValues(num_values)
 
         # 设置背景颜色（标签0）
@@ -280,17 +316,38 @@ class BuiltThread(QThread):
             return 1.0, 0.0, (1.0 - hue) * 6.0
 
     def run(self):
-        log_debug(f"开始3D重建, 数据形状: {self.data.shape}")
         try:
+            log_debug(f"开始3D重建, 数据形状: {self.data.shape}")
+            # 不要在 WorkerThread 模块导入阶段加载 VTK；启动时不应初始化 3D。
+            from vtkmodules.util import numpy_support
+            from vtkmodules.util.vtkConstants import VTK_UNSIGNED_SHORT
+            from vtkmodules.vtkCommonDataModel import vtkImageData
+            from vtkmodules.vtkFiltersCore import vtkWindowedSincPolyDataFilter
+            from vtkmodules.vtkFiltersGeneral import vtkDiscreteMarchingCubes
+            from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
+
             image_data = np.ascontiguousarray(self.data)
 
-            vtk_data = vtk.vtkImageData()
+            vtk_data = vtkImageData()
             d, h, w = image_data.shape
             vtk_data.SetDimensions(w, h, d)
             vtk_data.SetSpacing(self.spacing)
+            if self.geometry is not None:
+                vtk_data.SetOrigin(self.geometry.origin_lps_mm)
+                from vtkmodules.vtkCommonMath import vtkMatrix3x3
+
+                direction = vtkMatrix3x3()
+                for row in range(3):
+                    for column in range(3):
+                        direction.SetElement(
+                            row,
+                            column,
+                            self.geometry.direction_matrix[row, column],
+                        )
+                vtk_data.SetDirectionMatrix(direction)
 
             vtk_arr = numpy_support.numpy_to_vtk(
-                image_data.ravel(), deep=True, array_type=vtk.VTK_UNSIGNED_SHORT
+                image_data.ravel(), deep=True, array_type=VTK_UNSIGNED_SHORT
             )
             vtk_data.GetPointData().SetScalars(vtk_arr)
 
@@ -301,17 +358,17 @@ class BuiltThread(QThread):
             # 确保至少生成1和2
             max_value = max(max_label, 2)
 
-            dmc = vtk.vtkDiscreteMarchingCubes()
+            dmc = vtkDiscreteMarchingCubes()
             dmc.SetInputData(vtk_data)
             dmc.GenerateValues(max_value, 1, max_value)
             dmc.Update()
 
-            smoother = vtk.vtkWindowedSincPolyDataFilter()
+            smoother = vtkWindowedSincPolyDataFilter()
             smoother.SetInputConnection(dmc.GetOutputPort())
             smoother.SetNumberOfIterations(20)
             smoother.Update()
 
-            mapper = vtk.vtkPolyDataMapper()
+            mapper = vtkPolyDataMapper()
             mapper.SetInputConnection(smoother.GetOutputPort())
             lut = self._create_lookup_table()
             mapper.SetLookupTable(lut)
@@ -319,7 +376,7 @@ class BuiltThread(QThread):
             mapper.SetScalarRange(lut.GetRange())
             mapper.ScalarVisibilityOn()
 
-            actor = vtk.vtkActor()
+            actor = vtkActor()
             actor.SetMapper(mapper)
             actor.GetProperty().SetInterpolationToGouraud()
             actor.GetProperty().SetAmbient(0.2)
@@ -329,3 +386,4 @@ class BuiltThread(QThread):
             self.actor_ready.emit(actor)
         except Exception as e:
             log_error(f"3D重建时发生错误: {e}")
+            self.error.emit(str(e))

@@ -32,3 +32,15 @@ pcst = "pcst.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pcst"]
+include = ["schemas/*.json"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas/dataset.schema.json" = "pcst/schemas/dataset.schema.json"
+"schemas/boxes.schema.json" = "pcst/schemas/boxes.schema.json"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/pcst",
+    "/schemas/*.json",
+    "/pyproject.toml",
+]

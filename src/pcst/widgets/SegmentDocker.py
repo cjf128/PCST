@@ -179,9 +179,12 @@ class SegmentDocker(QWidget, Ui_Form):
 
             # 添加新标签
             labels[new_id] = {"name": f"Label {new_id}", "color": new_color}
+            ConfigManager().save(self.main_window._config)
 
             # 更新表格
             self.init_labels()
+            if hasattr(self.main_window, "_on_boxes_changed"):
+                self.main_window._on_boxes_changed()
 
             # 选中刚添加的新标签（最后一个）
             if self.radio_group.buttons():
@@ -213,6 +216,20 @@ class SegmentDocker(QWidget, Ui_Form):
                 QMessageBox.warning(self, "警告", "序号为1的标签不能删除！")
                 return
 
+            # 框标注的 class_id 与标签配置共享编号。若待删类别仍被三维框使用，
+            # 直接重排会把框静默指向错误类别，因此要求先在框列表中重新分类。
+            annotation_document = getattr(self.main_window, "annotation_document", None)
+            if annotation_document is not None and any(
+                int(annotation.class_id) == target_id
+                for annotation in annotation_document.annotations
+            ):
+                QMessageBox.warning(
+                    self,
+                    "无法删除标签",
+                    f"类别 {target_id} 仍被三维框使用，请先修改这些框的类别。",
+                )
+                return
+
             # 3. 处理数组 seg (关键步骤)
             if hasattr(self.main_window, "seg"):
                 seg = self.main_window.seg
@@ -232,8 +249,15 @@ class SegmentDocker(QWidget, Ui_Form):
             # 重新构建连续的字典 { "1": info, "2": info ... }
             remaining_labels = sorted(labels.items(), key=lambda x: int(x[0]))
             new_labels = {}
+            class_mapping = {}
             for i, (old_id, info) in enumerate(remaining_labels, 1):
                 new_labels[str(i)] = info
+                class_mapping[int(old_id)] = i
+
+            # 同步尚未删除类别的三维框编号（重叠/相同几何框不会被删除）。
+            box_controller = getattr(self.main_window, "box_controller", None)
+            if box_controller is not None:
+                box_controller.remap_class_ids(class_mapping)
 
             self.main_window._config.label = new_labels
 
@@ -244,6 +268,10 @@ class SegmentDocker(QWidget, Ui_Form):
                 self.main_window.undo_stack.clear()
             if hasattr(self.main_window, "update_image"):
                 self.main_window.update_image()
+            if hasattr(self.main_window, "request_3d_refresh"):
+                self.main_window.request_3d_refresh()
+            if hasattr(self.main_window, "_on_boxes_changed"):
+                self.main_window._on_boxes_changed()
         else:
             # 只有一个标签时，提示不能删除
             QMessageBox.warning(self, "警告", "至少需要保留一个标签！")
@@ -269,6 +297,8 @@ class SegmentDocker(QWidget, Ui_Form):
                 # 保存配置
                 config_manager = ConfigManager()
                 config_manager.save(self.main_window._config)
+                if hasattr(self.main_window, "_on_boxes_changed"):
+                    self.main_window._on_boxes_changed()
 
     def change_color(self, row, column):
         """修改标签颜色"""
@@ -300,10 +330,14 @@ class SegmentDocker(QWidget, Ui_Form):
                     # 保存配置
                     config_manager = ConfigManager()
                     config_manager.save(self.main_window._config)
+                    if hasattr(self.main_window, "_on_boxes_changed"):
+                        self.main_window._on_boxes_changed()
 
                     # 刷新图像
                     if hasattr(self.main_window, "update_image"):
                         self.main_window.update_image()
+                    if hasattr(self.main_window, "request_3d_refresh"):
+                        self.main_window.request_3d_refresh()
 
     def on_label_selected(self):
         """当选择标签时，发送信号给MainWindow"""

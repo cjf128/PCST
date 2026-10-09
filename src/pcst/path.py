@@ -10,4 +10,5 @@ else:
 ICONS_PATH: Path = BASE_PATH / "icons"
 MODELS_PATH: Path = BASE_PATH / "models"
 CACHE_PATH: Path = BASE_PATH / "data" / "cache"
+ANNOTATIONS_PATH: Path = BASE_PATH / "data" / "annotations"
 LOGS_PATH: Path = BASE_PATH / "logs"

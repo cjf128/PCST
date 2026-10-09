@@ -10,6 +10,7 @@ class VIEWERMode(Enum):
     SAM = 5
     ERASER = 6
     ZOOM = 7
+    BOX_3D = 8
 
 
 class LOADMode(Enum):

@@ -20,14 +20,15 @@ DEFAULT_LABELS = {
 
 DEFAULT_SHORTCUTS = {
     "load_atn": "Ctrl+O",
-    "aim_atn": "1",
-    "paint_atn": "4",
+    "btn_aim": "1",
+    "btn_paint": "4",
     "add_atn": "Ctrl+A",
-    "move_atn": "2",
-    "eraser_atn": "5",
+    "btn_move": "2",
+    "btn_eraser": "5",
     "save_atn": "Ctrl+S",
-    "win_atn": "3",
-    "sam_atn": "6",
+    "btn_win": "3",
+    "btn_sam": "6",
+    "btn_box": "7",
 }
 
 

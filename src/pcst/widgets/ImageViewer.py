@@ -23,6 +23,9 @@ from pcst.app.mode import SAMMode, VIEWERMode, VIEWMode
 class ImageViewer(QGraphicsView):
     Sam_Signal = Signal(np.ndarray)
     Mode_Signal = Signal()
+    # Emitted after a user pan/zoom.  MainWindow uses the normalized image
+    # center and relative zoom to synchronize the three orthogonal viewers.
+    view_state_changed = Signal(object)
 
     def __init__(self, parent, main_window):
         super().__init__(parent)
@@ -56,6 +59,7 @@ class ImageViewer(QGraphicsView):
         self.ellipse_pos = [0, 0]
         self.position = [0, 0, 0]
         self.crosshair_point = None
+        self._fit_transform = QTransform()
         self.config()
 
     def config(self):
@@ -113,8 +117,87 @@ class ImageViewer(QGraphicsView):
         self._scene.addItem(self.ellipse_item)
 
         self.rect_item = None
+        # Keep the fitted transform across contrast/opacity refreshes.  A
+        # property change recreates the pixmap item but must not reset the
+        # user's zoom baseline; MainWindow replaces it explicitly for a new
+        # case or a reset.
+
+    def remember_fit_transform(self) -> None:
+        """Remember the current fitted transform as this view's zoom baseline."""
+
+        self._fit_transform = QTransform(self.transform())
+
+    def _image_center_uv(self) -> tuple[float, float] | None:
+        pixmap = self.pixmap_item.pixmap()
+        if pixmap.isNull() or pixmap.width() <= 0 or pixmap.height() <= 0:
+            return None
+        viewport_center = QPoint(self.viewport().width() // 2, self.viewport().height() // 2)
+        scene_point = self.mapToScene(viewport_center)
+        image_point = self.pixmap_item.mapFromScene(scene_point)
+        width = max(1, pixmap.width() - 1)
+        height = max(1, pixmap.height() - 1)
+        return (
+            max(0.0, min(1.0, image_point.x() / width)),
+            max(0.0, min(1.0, image_point.y() / height)),
+        )
+
+    def view_state(self) -> dict[str, object] | None:
+        """Return a view-independent pan/zoom state for sibling viewers."""
+
+        center_uv = self._image_center_uv()
+        if center_uv is None:
+            return None
+        fit_scale = abs(float(self._fit_transform.m11()))
+        current_scale = abs(float(self.transform().m11()))
+        if fit_scale < 1e-9:
+            fit_scale = 1.0
+        zoom = max(0.05, min(50.0, current_scale / fit_scale))
+        return {"center_uv": center_uv, "zoom": zoom}
+
+    def apply_view_state(self, state: object) -> None:
+        """Apply a sibling's normalized center/zoom without emitting a loop."""
+
+        if not isinstance(state, dict):
+            return
+        center_uv = state.get("center_uv")
+        if (
+            not isinstance(center_uv, (tuple, list))
+            or len(center_uv) != 2
+        ):
+            return
+        try:
+            u = max(0.0, min(1.0, float(center_uv[0])))
+            v = max(0.0, min(1.0, float(center_uv[1])))
+            zoom = max(0.05, min(50.0, float(state.get("zoom", 1.0))))
+        except (TypeError, ValueError, OverflowError):
+            return
+        pixmap = self.pixmap_item.pixmap()
+        if pixmap.isNull():
+            return
+
+        target = QTransform(self._fit_transform)
+        target.scale(zoom, zoom)
+        self.setTransform(target)
+        image_point = QPointF(
+            u * max(0, pixmap.width() - 1),
+            v * max(0, pixmap.height() - 1),
+        )
+        self.centerOn(self.pixmap_item.mapToScene(image_point))
+        self.viewport().update()
+
+    def _emit_view_state(self) -> None:
+        state = self.view_state()
+        if state is not None:
+            self.view_state_changed.emit(state)
+
+    def _activate(self):
+        """记录最近交互的方位视图，供主窗口处理绘制和滚轮事件。"""
+        if self.main_window is not None:
+            self.main_window._active_viewer = self
+            self.main_window.view_mode = self.view_mode
 
     def mousePressEvent(self, event):
+        self._activate()
         super().mousePressEvent(event)
         if self.pixmap_item is not None:
             if event.button() == Qt.MouseButton.LeftButton:
@@ -191,6 +274,7 @@ class ImageViewer(QGraphicsView):
         event.ignore()
 
     def mouseMoveEvent(self, event):
+        self._activate()
         super().mouseMoveEvent(event)
         if self.pixmap_item is not None:
             pos = event.position().toPoint()
@@ -222,6 +306,7 @@ class ImageViewer(QGraphicsView):
                 self.position[0] = pos.x()
                 self.position[1] = pos.y()
                 self.viewport().update()
+                self._emit_view_state()
 
             if (
                 self.mode == VIEWERMode.SAM
@@ -229,10 +314,10 @@ class ImageViewer(QGraphicsView):
             ):
                 # 获取当前SAM模式
                 current_mode = SAMMode.BOX  # 默认BOX模式
-                if hasattr(self.main_window, "sam_Setting") and hasattr(
-                    self.main_window.sam_Setting, "current_mode"
+                if hasattr(self.main_window, "segment_setting") and hasattr(
+                    self.main_window.segment_setting, "current_mode"
                 ):
-                    current_mode = self.main_window.sam_Setting.current_mode
+                    current_mode = self.main_window.segment_setting.current_mode
 
                 if current_mode == SAMMode.BOX:
                     # BOX模式：继续画框
@@ -273,10 +358,12 @@ class ImageViewer(QGraphicsView):
                 scale_factor = max(0.2, min(2, scale_factor))
 
                 self.scale(scale_factor, scale_factor)
+                self._emit_view_state()
 
         event.ignore()
 
     def mouseReleaseEvent(self, event):
+        self._activate()
         super().mouseReleaseEvent(event)
         if self.pixmap_item is not None:
             if event.button() == Qt.MouseButton.LeftButton:
@@ -310,14 +397,7 @@ class ImageViewer(QGraphicsView):
         event.ignore()
 
     def wheelEvent(self, event):
-        angle = event.angleDelta()
-        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            if self.mode == VIEWERMode.PAINT or self.mode == VIEWERMode.ERASER:
-                if angle.y() > 0 and self.radius < 15:
-                    self.radius += 2
-                elif angle.y() < 0 and self.radius > 2:
-                    self.radius -= 2
-
+        self._activate()
         event.ignore()
 
     def enterEvent(self, event):
@@ -352,7 +432,7 @@ class ImageViewer(QGraphicsView):
 
     def _commit_crosshair_point(self):
         if hasattr(self.main_window, "update_crosshair_from_slice_point"):
-            self.main_window.update_crosshair_from_slice_point(self.point)
+            self.main_window.update_crosshair_from_slice_point(self, self.point)
         else:
             self.position[0] = self.last_mouse_position.x()
             self.position[1] = self.last_mouse_position.y()
@@ -364,6 +444,11 @@ class ImageViewer(QGraphicsView):
         painter.save()
         painter.resetTransform()
 
+        # 三维框 annotation 使用 IJK 作为唯一真值，由控制器投影到当前位面。
+        box_controller = getattr(self.main_window, "box_controller", None)
+        if box_controller is not None:
+            box_controller.draw(self, painter)
+
         viewport_point = self._crosshair_viewport_point()
         if viewport_point is not None:
             center_x = viewport_point.x()
@@ -373,31 +458,43 @@ class ImageViewer(QGraphicsView):
             center_y = self.position[1]
 
         if self.view_mode == VIEWMode.AXIAL:
-            axe = ["R", "L", "A", "P"]
+            default_axes = ["R", "L", "A", "P"]
             color = ["red", "blue"]
         elif self.view_mode == VIEWMode.SAGITTAL:
-            axe = ["A", "P", "S", "I"]
+            default_axes = ["A", "P", "S", "I"]
             color = ["green", "red"]
         elif self.view_mode == VIEWMode.CORONAL:
-            axe = ["R", "L", "S", "I"]
+            default_axes = ["R", "L", "S", "I"]
             color = ["green", "blue"]
+        else:
+            default_axes = ["", "", "", ""]
+            color = ["red", "blue"]
+
+        # 方位标记由统一的 geometry 服务推导；没有加载图像时保留历史默认值。
+        axes = default_axes
+        direction_labels = getattr(self.main_window, "direction_labels", None)
+        if direction_labels is not None:
+            try:
+                axes = list(direction_labels(self.view_mode))
+            except Exception:
+                axes = default_axes
 
         if self.direction_show:
             font = QFont("Arial", 10)
             painter.setFont(font)
             painter.setPen(Qt.GlobalColor.yellow)
             margin = 10
-            painter.drawText(margin, self.viewport().height() // 2 - 5, axe[0])
+            painter.drawText(margin, self.viewport().height() // 2 - 5, axes[0])
             painter.drawText(
                 self.viewport().width() - margin - 10,
                 self.viewport().height() // 2 - 5,
-                axe[1],
+                axes[1],
             )
-            painter.drawText(self.viewport().width() // 2 - 5, margin + 10, axe[2])
+            painter.drawText(self.viewport().width() // 2 - 5, margin + 10, axes[2])
             painter.drawText(
                 self.viewport().width() // 2 - 5,
                 self.viewport().height() - margin,
-                axe[3],
+                axes[3],
             )
 
         if self.information_show:
